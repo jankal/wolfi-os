@@ -1,0 +1,68 @@
+package:
+  name: pdfium
+  version: "7073"
+  epoch: 0
+  description: "The PDF library used by the Chromium project"
+  copyright:
+    - license: Apache-2.0
+
+environment:
+  contents:
+    packages:
+      - busybox
+      - build-base
+      - wolfi-base
+
+pipeline:
+  - uses: fetch
+    if: ${{build.arch}} == 'x86_64'
+    with:
+      uri: https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F${{package.version}}/pdfium-linux-x64.tgz
+      expected-sha512: 4ce0149c5259e0ea8d8405c420482ed7ba3365eba700bb21b0a486ed04cd9515fef63b0cfbb6e7fcafb13e7394c1dc33870b623aa09b282e5e5892298179541e
+      extract: false
+
+  - uses: fetch
+    if: ${{build.arch}} == 'aarch64'
+    with:
+      uri: https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F${{package.version}}/pdfium-linux-arm64.tgz
+      expected-sha512: fc4472a99a41d020d4af353bb537ea543214fadb51ea5d56928537f1f0537f23933d287b485071f38d1c07128f3f5227f8070a432fadf2a0c11b6039148646f0
+      extract: false
+
+  - name: Extract
+    if: ${{build.arch}} == 'aarch64'
+    runs: |
+      tar -C /usr -xzf pdfium-linux-arm64.tgz
+      ls -la /usr/lib
+
+  - name: Extract
+    if: ${{build.arch}} == 'x86_64'
+    runs: |
+      tar -C /usr -xzf pdfium-linux-x64.tgz
+
+  - name: Write pkg-config
+    runs: |
+      cat > /usr/lib/pkgconfig/pdfium.pc <<EOF
+      libdir=/usr/lib
+      includedir=/usr/include
+
+      Name: PDFium
+      Description: PDFium
+      Version: ${{package.version}}
+      Requires:
+
+      Libs: -L${libdir} -lpdfium
+      Cflags: -I${includedir}
+      EOF
+
+update:
+  enabled: true
+  release-monitor:
+    identifier: 377295
+
+test:
+  pipeline:
+    - name: "Verify shared library presence"
+      runs: |
+        test -f /usr/lib/libpdfium.so
+    - uses: test/tw/ldd-check
+    - uses: test/pkgconf
