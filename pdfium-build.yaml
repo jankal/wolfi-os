@@ -15,7 +15,8 @@ environment:
       - ninja-build
       - bash
       - curl
-      
+      - python3
+
 pipeline:
   - uses: git-checkout
     with:
