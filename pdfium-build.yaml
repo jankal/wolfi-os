@@ -38,6 +38,7 @@ pipeline:
       sed -i 's/component("pdfium") {/shared_library("pdfium")/g' pdfium/BUILD.gn
       sed -i 's/#if defined(COMPONENT_BUILD)\n\/\/ FPDF_EXPORT should be consistent with |export| in the pdfium_fuzzer\n\/\/ template in testing\/fuzzers\/BUILD.gn.//g' pdfium/public/fpdfview.h
       sed -i 's/#else\n#define FPDF_EXPORT\n#endif  \/\/ defined(COMPONENT_BUILD)//g' pdfium/public/fpdfview.h
+      cd pdfium
       gn gen out --args='is_debug=false pdf_use_partition_alloc=false target_cpu="x64" target_os="linux" pdf_enable_v8=false pdf_enable_xfa=false treat_warnings_as_errors=false is_component_build=false symbol_level=0 clang_use_chrome_plugins=false pdf_is_standalone=true'
       ninja -C out pdfium -v
 
