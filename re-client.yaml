@@ -1,0 +1,39 @@
+package:
+  name: re-client
+  version: 0.177.1
+  epoch: 0
+  description: "The PDF library used by the Chromium project"
+  copyright:
+    - license: Apache-2.0
+
+environment:
+  contents:
+    packages:
+      - busybox
+      - build-base
+      - wolfi-base
+      - bazelisk
+      - bash
+      - python3
+      - curl
+
+pipeline:
+  - uses: git-checkout
+    with:
+      repository: https://chromium.googlesource.com/chromium/tools/depot_tools.git
+      destination: ./depot-tools
+  
+  - uses: git-checkout
+    with:
+      repository: https://github.com/bazelbuild/reclient.git
+  
+  - environment:
+      # It otherwise defaults to the latest while the upstream does not provide lockfiles for > 3.12.
+      HERMETIC_PYTHON_VERSION: "3.12"
+    runs: |
+      DEPOT_TOOLS_UPDATE=0
+      DEPOT_TOOLS_WIN_TOOLCHAIN=0
+      export PATH=$PATH:$PWD/depot-tools
+      bash -c "bazelisk build --verbose_failures --config=clangscandeps //:artifacts_tar"
+      untar -C ${{targets.destdir}} bazel-bin/artifacts.tar
+    
